@@ -55,11 +55,6 @@ const typeDefs = gql`
       me: User
   }
 
-  input AuthorInput {
-    name: String!
-    born: Int
-  }
-
   type Mutation {
       createUser(
           username: String!
@@ -72,7 +67,7 @@ const typeDefs = gql`
       addBook(
         title: String!
         published: Int!
-        author: AuthorInput!
+        author: String!
         genres: [String!]!
       ) : Book
       editAuthor(
@@ -88,29 +83,29 @@ const resolvers = {
       authorCount: async () => Author.collection.countDocuments(),
       allBooks: async (root, args) => {
 
-         if (args.author) {
-             if(args.genre) {
-            return Book.find({
-                $and: [
-                    { author: { $in: [args.author.id] } },
-                    { genres: { $in: [args.genre] } }
-                ]})
-         }
-         return Book.find({ author: args.author.id })
+        if (args.author) {
+          const foundAuthor = await Author.findOne({ name: args.author })
+          if (foundAuthor) {
+            if (args.genre) {
+              return await Book.find({ author: foundAuthor.id, genres: { $in: [args.genre] } }).populate('author')
+            }
+            return  await Book.find({ author: foundAuthor.id }).populate('author')
+          }
+          return null
         }
 
         if (args.genre) {
-            return Book.find({ genres: { $in: [args.genre] } })
+          return Book.find({ genres: { $in: [args.genre] } }).populate('author')
         }
 
-        return Book.find({})
-    },
-      allAuthors: async (root, args) => Author.find({}),
+        return Book.find({}).populate('author')
+
+      },
+      allAuthors: async () => await Author.find({}),
       me: (root, args, context) => {
         return context.currentUser
       }
-
-  },
+    },
 
   Author: {
       bookCount: async(root) => {
@@ -145,7 +140,7 @@ const resolvers = {
           return { value: jwt.sign(userForToken, JWT_SECRET) }
       },
       addBook: async (root, args, context) => {
-        const findAuthor = await Author.findOne({ name: args.author.name })
+        const findAuthor = await Author.findOne({ name: args.author })
         const findBook = await Book.findOne({ title: args.title})
           const user = context.currentUser
 
@@ -159,15 +154,15 @@ const resolvers = {
               })
           }
           if (!findAuthor) {
-              const author = new Author({ ...args.author })
+              const author = new Author({ "name": args.author })
               try {
                   await author.save()
               } catch (error) {
                   throw new UserInputError(error.message, { invalidArgs: args,})
               }
           }
-          const findNewAuthor = await Author.findOne({ name: args.author.name})
-          const book = new Book({ ...args, author: findNewAuthor })
+          const foundAuthor = await Author.findOne({ name: args.author })
+          const book = new Book({ ...args, author: foundAuthor })
 
           try {
               await book.save()
@@ -176,8 +171,6 @@ const resolvers = {
                   invalidargs: args,
               })
           }
-          return book
-
       },
       editAuthor: async (root, args, context) => {
           const author = await Author.findOne({ name: args.name})
