@@ -1,12 +1,15 @@
 import ReactDOM from 'react-dom'
 import { setContext } from 'apollo-link-context'
 import App from './App'
+import { getMainDefinition } from '@apollo/client/utilities'
+import { WebSocketLink } from "@apollo/client/link/ws";
 
 import {
   ApolloClient,
   ApolloProvider,
   HttpLink,
   InMemoryCache,
+  split
 } from '@apollo/client'
 
 const authLink = setContext((_, { headers }) => {
@@ -19,16 +22,37 @@ const authLink = setContext((_, { headers }) => {
   }
 })
 
-const httpLink = new HttpLink({ uri: 'http://localhost:4000' })
+const httpLink = new HttpLink({
+    uri: "http://localhost:4000",
+  });
 
-const client = new ApolloClient({
-  cache: new InMemoryCache(),
-  link: authLink.concat(httpLink),
-})
+  const wsLink = new WebSocketLink({
+    uri: "ws://localhost:4000/gaphql",
+    options: {
+      reconnect: true,
+    },
+  });
+  const splitLink = split(
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return (
+        definition.kind === "OperationDefinition" &&
+        definition.operation === "subscription"
+      );
+    },
+    wsLink,
+    authLink.concat(httpLink)
+  );
 
-ReactDOM.render(
-  <ApolloProvider client={client}>
-    <App />
-  </ApolloProvider>,
-  document.getElementById('root')
-)
+  const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    link: splitLink,
+  });
+
+
+  ReactDOM.render(
+    <ApolloProvider client={client}>
+      <App />
+    </ApolloProvider>,
+    document.getElementById("root")
+  );

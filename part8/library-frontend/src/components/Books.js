@@ -5,7 +5,6 @@ import { useQuery } from '@apollo/client'
 const Books = (props) => {
     const result = useQuery(ALL_BOOKS)
     const [filter, setFilter] = useState('any')
-    console.log(result.data)
     const [genres, setGenres] = useState(['any'])
 
     useEffect(() => {

@@ -1,10 +1,14 @@
-import { useState } from 'react'
-import { useApolloClient } from '@apollo/client'
+import { useState, useEffect } from 'react'
+import { useSubscription, useApolloClient } from '@apollo/client'
+
 import Authors from './components/Authors'
 import Books from './components/Books'
 import NewBook from './components/NewBook'
 import LoginForm from './components/LoginForm'
 import Recommended from './components/Recommended'
+
+import { BOOK_ADDED, ALL_BOOKS } from './queries'
+
 
 const Notify = ({ errorMessage }) => {
     if (!errorMessage) {
@@ -19,7 +23,25 @@ const App = () => {
     const [page, setPage] = useState('authors')
     const client = useApolloClient()
 
+
+    useSubscription(BOOK_ADDED, {
+        onSubscriptionData: ({ subscriptionData }) => {
+          alert(`${subscriptionData.data.bookAdded.title} added!`);
+          client.cache.updateQuery({ query: ALL_BOOKS }, ({ allBooks }) => {
+            return { allBooks: allBooks.concat(subscriptionData.data.bookAdded) };
+          });
+        },
+      });
+
+    useEffect(()=>{
+        const localToken = localStorage.getItem('library-user-token');
+        if (localToken){
+          setToken(localToken);
+        }
+      },[]);
+
     const logout = () => {
+        setPage('books')
         setToken(null)
         localStorage.clear()
         client.resetStore()
