@@ -1,23 +1,18 @@
 import express from 'express';
 import patientsService from '../services/patientsService';
-import toNewPatientEntry from '../utils';
+import toNewPatientEntry, { toNewEntry } from '../utils';
+
 
 const patientsRouter = express.Router();
 
 patientsRouter.get('/', (_req, res) => {
     res.send(patientsService.getNonSensitiveEntries());
 });
-/*
-patientsRouter.get('/id', (req, res) => {
-    const patient = patientsService.findById(String(req.params.id));
 
-    if (patient) {
-        res.send(patient);
-    } else {
-        res.sendStatus(404);
-    }
+patientsRouter.get('/:id', (req, res) => {
+    res.send(patientsService.findById(String(req.params.id)));
 });
-*/
+
 
 patientsRouter.post('/', (req, res) => {
     try {
@@ -33,6 +28,17 @@ patientsRouter.post('/', (req, res) => {
         }
         res.status(400).send(errorMessage);
     }
+});
+
+patientsRouter.post("/:id/entries", (req, res) => {
+
+    const newPatientEntry = toNewEntry(req.body);
+    const added = patientsService.addEntry(req.params.id, newPatientEntry);
+    if (!patientsService.findById(req.params.id)) {
+        res.status(400).json({ error: "Not Found" });
+        return;
+    }
+    res.json(added);
 });
 
 export default patientsRouter;

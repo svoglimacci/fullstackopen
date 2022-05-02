@@ -6,7 +6,7 @@ import { Button, Divider, Container } from "@material-ui/core";
 import { apiBaseUrl } from "./constants";
 import { useStateValue } from "./state";
 import { Patient } from "./types";
-
+import PatientPage from './PatientPage';
 import PatientListPage from "./PatientListPage";
 import { Typography } from "@material-ui/core";
 
@@ -14,6 +14,7 @@ const App = () => {
   const [, dispatch] = useStateValue();
   React.useEffect(() => {
     void axios.get<void>(`${apiBaseUrl}/ping`);
+
 
     const fetchPatientList = async () => {
       try {
@@ -40,6 +41,7 @@ const App = () => {
           </Button>
           <Divider hidden />
           <Routes>
+              <Route path="/patients/:id" element={<PatientPage />}/>
             <Route path="/" element={<PatientListPage />} />
           </Routes>
         </Container>
