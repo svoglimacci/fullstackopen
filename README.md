@@ -22,3 +22,4 @@ The main focus is on building single page applications with ReactJS that use RES
 - [x] (http://www.google.fr/ "Part 11 : CI/CD")
 - [x] (http://www.google.fr/ "Part 12 : Containers")
 - [x] (http://www.google.fr/ "Part 13 : Using relational databases")
+- [ ] [Named Link](http://www.google.fr/ "Named link title")
