@@ -1,6 +1,7 @@
 # fullstackopen
 
-Full Stack open 2022
+## Full Stack open 2022
+
 https://fullstackopen.com/en/
 
 Learn React, Redux, Node.js, MongoDB, GraphQL and TypeScript in one go! 
